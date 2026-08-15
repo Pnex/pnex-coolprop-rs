@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Build & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      # Caches target/ including the compiled vendored CoolProp static
+      # library (it lives under target/*/build/coolprop-sys-*/out).
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake g++
+
+      - name: Formatting
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      # Builds the vendored CoolProp v8.0.0 static library (auto-cloned at
+      # the pinned tag on the first run) and links it into the server.
+      - name: Build
+        run: cargo build --release --workspace
+
+      # Full suite: unit tests, API integration tests, golden values, and
+      # the machine-checked 100% CoolPropLib.h coverage test.
+      - name: Test
+        run: cargo test --workspace
+
+      - name: Dump OpenAPI spec
+        run: cargo run -p coolprop-server --example dump-openapi
+
+      - name: Upload OpenAPI spec
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-json
+          path: openapi.json

@@ -1,0 +1,7 @@
+/target
+vendor/CoolProp
+openapi.json
+
+# local tooling
+.claude/
+.idea/
