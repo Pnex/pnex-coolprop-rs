@@ -45,7 +45,11 @@ jobs:
       - name: Test
         run: |
           set +e
-          cargo test --workspace --no-fail-fast 2>&1 | tee /tmp/test.log
+          # --test-threads=1: CoolProp keeps process-global state (config,
+          # reference states, stdout redirection, errstring), so tests that
+          # mutate it can race with concurrent tests. All FFI calls are
+          # serialized by a mutex anyway, so threads gain nothing here.
+          cargo test --workspace --no-fail-fast -- --test-threads=1 2>&1 | tee /tmp/test.log
           rc=${PIPESTATUS[0]}
           if [ "$rc" -ne 0 ]; then
             {
