@@ -126,3 +126,16 @@ vendor/CoolProp/         pinned clone of https://github.com/CoolProp/CoolProp (v
   400. The deprecated `Props1` kSI conversion rejects every modern output —
   also surfaced as a 400. Both are upstream behaviors, faithfully surfaced.
 - AbstractState handles live in the server process and are lost on restart.
+
+## License
+
+MIT — see [LICENSE.md](LICENSE.md). Applies to this repository's code.
+
+Third parties: the vendored
+[CoolProp](https://github.com/CoolProp/CoolProp) v8.0.0 sources
+(`vendor/CoolProp/`, compiled and statically linked by `coolprop-sys`) are
+likewise MIT-licensed — their notice ships unchanged as
+`vendor/CoolProp/LICENSE`. All other dependencies (axum, tokio, serde,
+utoipa, …) are permissively licensed (MIT / Apache-2.0). **REFPROP**, if
+used through the `REFPROP::` backend, is commercial software and is not
+covered by any of the above.
