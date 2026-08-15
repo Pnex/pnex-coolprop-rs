@@ -36,21 +36,17 @@ jobs:
           persist-credentials: false # nothing here pushes to git; keep the token out of .git/config
 
       # Fail fast with a clear message instead of the cryptic
-      # "Username and password required" from login-action. Push-triggered
-      # runs always see repository secrets, so if this fires the names are
-      # missing on THIS repo (other repo / environment / Variables tab).
+      # "Username and password required" from login-action. Deliberately a
+      # plain shell test on env-mapped secrets (the docs-canonical pattern):
+      # piping toJSON(secrets) into a script trips GitHub's
+      # malicious-workflow detector and forces manual approval every run.
       - name: Check Docker Hub credentials
         env:
           DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME || secrets.DOCKER_USERNAME }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-          SECRETS_JSON: ${{ toJSON(secrets) }}
-          VARS_JSON: ${{ toJSON(vars) }}
         run: |
           if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_TOKEN" ]; then
-            # Names only — GitHub masks all secret values automatically.
-            NAMES=$(printf '%s' "$SECRETS_JSON" | python3 -c "import json,sys; print(', '.join(sorted(json.load(sys.stdin))))" 2>/dev/null || echo 'unavailable')
-            VARNAMES=$(printf '%s' "$VARS_JSON" | python3 -c "import json,sys; print(', '.join(sorted(json.load(sys.stdin))))" 2>/dev/null || echo 'unavailable')
-            echo "::error::Docker Hub credentials not visible. Secret names this run can see: [$NAMES]. Variable names: [$VARNAMES]. DOCKER_TOKEN/DOCKER_USERNAME are org-level: open the Pnex org -> Settings -> Secrets and variables -> Actions, and on each item check its access policy is 'All repositories' (or lists Pnex/pnex-coolprop-rs). Push-triggered runs always see secrets the repo can access."
+            echo "::error::Docker Hub credentials not visible to this workflow. DOCKER_TOKEN/DOCKER_USERNAME live at the Pnex org level (org Settings -> Secrets and variables -> Actions); each item's access policy must be 'All repositories' or list Pnex/pnex-coolprop-rs."
             exit 1
           fi
 
