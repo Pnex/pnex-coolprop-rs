@@ -404,6 +404,21 @@ async fn parameter_information_string() {
 }
 
 #[tokio::test]
+async fn fluids_list_endpoint() {
+    let (status, body) = req(Method::GET, "/api/v1/fluids").await;
+    assert_eq!(status, StatusCode::OK, "body: {body}");
+    let fluids = body["values"].as_array().unwrap();
+    // CoolProp v8 ships >100 EOS fluids.
+    assert!(fluids.len() > 100, "got {} fluids", fluids.len());
+    assert!(fluids.iter().any(|f| f == "Water"));
+    assert!(fluids.iter().any(|f| f == "R134a"));
+    // Parsed entries, not the raw comma-joined string.
+    assert!(fluids
+        .iter()
+        .all(|f| !f.as_str().unwrap().is_empty() && !f.as_str().unwrap().contains(',')));
+}
+
+#[tokio::test]
 async fn fluid_param_string_and_len() {
     let (status, body) = req(Method::GET, "/api/v1/fluids/Water/param/aliases").await;
     assert_eq!(status, StatusCode::OK, "body: {body}");

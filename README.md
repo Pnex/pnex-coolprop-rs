@@ -54,6 +54,9 @@ CI (`.github/workflows/docker.yml`) publishes to
 ## The example from the CoolProp README, over HTTP
 
 ```bash
+# All fluids known to CoolProp -> {"values": ["Water", "R134a", ...]}
+curl -s localhost:8080/api/v1/fluids | jq .values | head
+
 # PropsSI("Dmolar","T",298,"P",1e5,"Propane[0.5]&Ethane[0.5]")   (default HEOS)
 curl -s localhost:8080/api/v1/props/si -H 'content-type: application/json' -d '{
   "output": "Dmolar", "name1": "T", "prop1": 298,
@@ -89,7 +92,7 @@ curl -s -X DELETE localhost:8080/api/v1/abstract-state/$h
 |---|---|---|
 | Props | `POST /props/si`, `/props/1si`, `/props/si-multi`, `/props/1si-multi`, `/props/phase`, `/props/legacy`, `/props/legacy-s`, `/props/legacy/1` | `PropsSI`, `Props1SI`, `PropsSImulti`, `Props1SImulti`, `PhaseSI`, `Props`, `PropsS`, `Props1` |
 | Humid air | `POST /ha/props-si`, `/ha/props`, `/ha/cair-sat` | `HAPropsSI`, `HAProps`, `cair_sat` |
-| Info / misc | `/params/global/{p}`, `/params/information/{p}`, `/fluids/{f}/param/{p}[/length]`, `/params/index`, `/input-pairs/index`, `/fluids/is-valid`, `POST /fluids/extract-backend`, `POST /fluids/add-json`, `/misc/f2k`, `/misc/k2f`, `/misc/saturation-ancillary` | `get_global_param_string`, `get_parameter_information_string`, `get_fluid_param_string(_len)`, `get_param_index`, `get_input_pair_index`, `C_is_valid_fluid_string`, `C_extract_backend`, `add_fluids_as_JSON`, `F2K`, `K2F`, `saturation_ancillary` |
+| Info / misc | `/params/global/{p}`, `/params/information/{p}`, `GET /fluids` (all fluid names as a JSON array; parsed `fluids_list`), `/fluids/{f}/param/{p}[/length]`, `/params/index`, `/input-pairs/index`, `/fluids/is-valid`, `POST /fluids/extract-backend`, `POST /fluids/add-json`, `/misc/f2k`, `/misc/k2f`, `/misc/saturation-ancillary` | `get_global_param_string`, `get_parameter_information_string`, `get_fluid_param_string(_len)`, `get_param_index`, `get_input_pair_index`, `C_is_valid_fluid_string`, `C_extract_backend`, `add_fluids_as_JSON`, `F2K`, `K2F`, `saturation_ancillary` |
 | Config | `PUT /config/{string,double,bool}`, `POST /config/departure-functions`, `POST /config/reference-state/{S,D}`, `GET|PUT /misc/debug-level`, `POST /admin/redirect-stdout` | `set_config_*`, `set_departure_functions`, `set_reference_stateS/D`, `get/set_debug_level`, `redirect_stdout` |
 | FORTRAN shims | `POST /fortran/{propssi,hapropssi,haprops}` | `propssi_`, `hapropssi_`, `haprops_` |
 | AbstractState | `POST /abstract-state`, `DELETE /abstract-state/{h}`, and ~35 sub-endpoints (fractions, update, keyed outputs, derivatives, phase envelope, spinodal, critical points, ...) | all 38 `AbstractState_*` functions |

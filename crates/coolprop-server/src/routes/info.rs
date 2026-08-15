@@ -5,7 +5,7 @@ use axum::Json;
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::dto::{DoubleValue, FlagValue, IndexValue, LengthValue, StringValue};
+use crate::dto::{DoubleValue, FlagValue, IndexValue, LengthValue, StringArrayValue, StringValue};
 use crate::error::ApiResult;
 use crate::safe;
 
@@ -65,6 +65,25 @@ pub async fn get_parameter_information_string(
     let info = kind.info.unwrap_or_else(|| "long".to_string());
     Ok(Json(StringValue {
         value: safe::get_parameter_information_string(&param, &info)?,
+    }))
+}
+
+/// Names of every fluid in CoolProp's Helmholtz-EOS library (`Water`,
+/// `R134a`, ...), as a JSON array.
+///
+/// Convenience wrapper over `get_global_param_string("fluids_list")` —
+/// also available raw at `GET /api/v1/params/global/fluids_list` — with the
+/// comma-joined list parsed into individual entries.
+#[utoipa::path(
+    get,
+    path = "/api/v1/fluids",
+    responses(
+        (status = 200, description = "All fluid names", body = StringArrayValue),
+    )
+)]
+pub async fn fluids_list() -> ApiResult<Json<StringArrayValue>> {
+    Ok(Json(StringArrayValue {
+        values: safe::fluids_list()?,
     }))
 }
 

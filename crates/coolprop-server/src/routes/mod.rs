@@ -46,6 +46,7 @@ pub fn router() -> Router<AppState> {
         )
         .route("/api/v1/params/index", get(info::get_param_index))
         .route("/api/v1/input-pairs/index", get(info::get_input_pair_index))
+        .route("/api/v1/fluids", get(info::fluids_list))
         .route("/api/v1/fluids/is-valid", get(info::is_valid_fluid_string))
         .route(
             "/api/v1/fluids/extract-backend",

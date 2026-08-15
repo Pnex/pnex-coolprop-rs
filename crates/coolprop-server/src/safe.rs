@@ -294,6 +294,22 @@ pub fn get_global_param_string(param: &str) -> Result<String> {
     global_param_string(param).ok_or_else(|| CoolPropError(fresh_errstring_or_default()))
 }
 
+/// Names of every fluid in CoolProp's Helmholtz-EOS library, via
+/// `get_global_param_string("fluids_list")`.
+///
+/// CoolProp joins the names with `LIST_STRING_DELIMITER` (default `,`);
+/// like [`abstract_state_fluid_names`], a non-default delimiter configured
+/// through `set_config_string` is not honored when splitting.
+pub fn fluids_list() -> Result<Vec<String>> {
+    let raw = get_global_param_string("fluids_list")?;
+    Ok(raw
+        .split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned)
+        .collect())
+}
+
 /// `get_parameter_information_string(param, Output, n)` — long name, units or
 /// IO role of a parameter.
 ///

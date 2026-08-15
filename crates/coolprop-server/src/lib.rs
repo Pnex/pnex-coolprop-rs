@@ -50,6 +50,7 @@ use utoipa_swagger_ui::SwaggerUi;
         routes::info::get_fluid_param_string_len,
         routes::info::get_param_index,
         routes::info::get_input_pair_index,
+        routes::info::fluids_list,
         routes::info::is_valid_fluid_string,
         routes::info::extract_backend,
         routes::info::add_fluids_as_json,

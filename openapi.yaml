@@ -1569,6 +1569,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/fluids:
+    get:
+      tags:
+      - routes::info
+      summary: |-
+        Names of every fluid in CoolProp's Helmholtz-EOS library (`Water`,
+        `R134a`, ...), as a JSON array.
+      description: |-
+        Convenience wrapper over `get_global_param_string("fluids_list")` —
+        also available raw at `GET /api/v1/params/global/fluids_list` — with the
+        comma-joined list parsed into individual entries.
+      operationId: fluids_list
+      responses:
+        '200':
+          description: All fluid names
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringArrayValue'
   /api/v1/fluids/add-json:
     post:
       tags:
