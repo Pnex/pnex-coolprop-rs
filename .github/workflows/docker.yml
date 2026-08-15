@@ -39,9 +39,12 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+          SECRETS_JSON: ${{ toJSON(secrets) }}
         run: |
           if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_TOKEN" ]; then
-            echo "::error::DOCKER_USERNAME / DOCKER_TOKEN secrets are not visible to this workflow. Set them as *repository* secrets: Settings -> Secrets and variables -> Actions -> New repository secret (exact names, uppercase). If they exist but you still see this, they were added to another repo, to an environment (needs 'environment:' on the job), or as org secrets without access to this repo."
+            # Names only — GitHub masks all secret values automatically.
+            NAMES=$(printf '%s' "$SECRETS_JSON" | python3 -c "import json,sys; print(', '.join(sorted(json.load(sys.stdin))))" 2>/dev/null || echo 'unavailable')
+            echo "::error::DOCKER_USERNAME / DOCKER_TOKEN are not visible to this workflow. Secret names this run CAN see: [$NAMES]. They must be repository Actions secrets on Pnex/pnex-coolprop-rs (Settings -> Secrets and variables -> Actions), with these exact names. If they are listed in the UI but not in the list above, they are on a different repo/environment than you think."
             exit 1
           fi
 
