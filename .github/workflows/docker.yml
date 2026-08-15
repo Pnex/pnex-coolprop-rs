@@ -5,11 +5,12 @@
 #   push to main        -> :main + :latest
 #   push of a git tag   -> :<tag-name>             (e.g. :v1.0.0)
 #
-# Credentials:
-#   DOCKER_TOKEN   repository secret  (Docker Hub -> Account Settings ->
-#                                    Personal access tokens, Read/Write scope)
-#   DOCKER_USERNAME  repository variable OR secret (non-sensitive either way)
-# Set both under: Settings -> Secrets and variables -> Actions
+# Credentials (organization-level so other repos can reuse them):
+#   DOCKER_TOKEN   secret   (Docker Hub -> Account Settings ->
+#                          Personal access tokens, Read/Write scope)
+#   DOCKER_USERNAME  variable or secret (non-sensitive either way)
+# Configured under: Pnex org -> Settings -> Secrets and variables -> Actions.
+# Each org secret's access must be "All repositories" or include this repo.
 name: Docker
 
 on:
@@ -49,7 +50,7 @@ jobs:
             # Names only — GitHub masks all secret values automatically.
             NAMES=$(printf '%s' "$SECRETS_JSON" | python3 -c "import json,sys; print(', '.join(sorted(json.load(sys.stdin))))" 2>/dev/null || echo 'unavailable')
             VARNAMES=$(printf '%s' "$VARS_JSON" | python3 -c "import json,sys; print(', '.join(sorted(json.load(sys.stdin))))" 2>/dev/null || echo 'unavailable')
-            echo "::error::Docker Hub credentials not visible. Secret names this run can see: [$NAMES]. Variable names: [$VARNAMES]. Need DOCKER_TOKEN as a repository secret, and DOCKER_USERNAME as a repository variable or secret, on Pnex/pnex-coolprop-rs (Settings -> Secrets and variables -> Actions)."
+            echo "::error::Docker Hub credentials not visible. Secret names this run can see: [$NAMES]. Variable names: [$VARNAMES]. DOCKER_TOKEN/DOCKER_USERNAME are org-level: open the Pnex org -> Settings -> Secrets and variables -> Actions, and on each item check its access policy is 'All repositories' (or lists Pnex/pnex-coolprop-rs). Push-triggered runs always see secrets the repo can access."
             exit 1
           fi
 
