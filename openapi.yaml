@@ -1,0 +1,3258 @@
+openapi: 3.1.0
+info:
+  title: CoolProp Server
+  description: REST API wrapping the complete C API of CoolProp v8.0.0 (thermophysical properties of pure fluids, mixtures and humid air). Every one of the 71 functions exported by CoolPropLib.h is exposed by exactly one endpoint — see the `coverage` module for the mapping.
+  license:
+    name: MIT
+    identifier: MIT
+  version: 0.1.0
+paths:
+  /api/v1/abstract-state:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Create an AbstractState and return its handle.
+      description: Maps to the C function `AbstractState_factory`.
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequest'
+        required: true
+      responses:
+        '200':
+          description: Handle created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandleResponse'
+        '400':
+          description: CoolProp rejected backend/fluids
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}:
+    delete:
+      tags:
+      - routes::abstract_state
+      summary: Release an AbstractState. Subsequent calls with this handle return 404.
+      description: Maps to the C function `AbstractState_free`.
+      operationId: free
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: State released
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/all-critical-points:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: |-
+        All critical points for the current composition. The C API reports no
+        actual count; unfilled entries are trimmed heuristically.
+      description: Maps to the C function `AbstractState_all_critical_points`.
+      operationId: all_critical_points
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: max_points
+        in: query
+        description: Buffer capacity for points (default 10).
+        required: false
+        schema:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+      responses:
+        '200':
+          description: Critical points
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriticalPointsResponse'
+        '400':
+          description: Buffer too small
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/backend-name:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: Name of the backend used by this AbstractState.
+      description: Maps to the C function `AbstractState_backend_name`.
+      operationId: backend_name
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Backend name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringValue'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/binary-interaction:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Set a binary interaction parameter of a mixture.
+      description: Maps to the C function `AbstractState_set_binary_interaction_double`.
+      operationId: set_binary_interaction
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BinaryInteractionRequest'
+        required: true
+      responses:
+        '200':
+          description: Parameter set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/cubic-alpha-c:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Set cubic alpha function parameters (cubic EOS backends).
+      description: Maps to the C function `AbstractState_set_cubic_alpha_C`.
+      operationId: set_cubic_alpha_c
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CubicAlphaCRequest'
+        required: true
+      responses:
+        '200':
+          description: Parameters set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/first-partial-deriv:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: First partial derivative `(∂Of/∂Wrt)|Constant` in homogeneous phases.
+      description: Maps to the C function `AbstractState_first_partial_deriv`.
+      operationId: first_partial_deriv
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FirstPartialDerivRequest'
+        required: true
+      responses:
+        '200':
+          description: Derivative value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/first-saturation-deriv:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Saturation derivative `(∂Of/∂Wrt)|sat` — valid in the two-phase region.
+      description: Maps to the C function `AbstractState_first_saturation_deriv`.
+      operationId: first_saturation_deriv
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FirstSaturationDerivRequest'
+        required: true
+      responses:
+        '200':
+          description: Derivative value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/first-two-phase-deriv:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: First derivative in the two-phase region.
+      description: Maps to the C function `AbstractState_first_two_phase_deriv`.
+      operationId: first_two_phase_deriv
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FirstTwoPhaseDerivRequest'
+        required: true
+      responses:
+        '200':
+          description: Derivative value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/first-two-phase-deriv-splined:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: First two-phase derivative using the spline approach of Quoilin et al.
+      description: Maps to the C function `AbstractState_first_two_phase_deriv_splined`.
+      operationId: first_two_phase_deriv_splined
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FirstTwoPhaseDerivRequest'
+        required: true
+      responses:
+        '200':
+          description: Derivative value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/fluid-names:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: Fluid names of this AbstractState.
+      description: Maps to the C function `AbstractState_fluid_names`.
+      operationId: fluid_names
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Fluid names
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringArrayValue'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/fluid-param-string:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: String metadata about the fluid(s) of this AbstractState.
+      description: Maps to the C function `AbstractState_fluid_param_string`.
+      operationId: fluid_param_string
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: param
+        in: query
+        description: Fluid parameter, e.g. `"pure"`, `"CAS"`, `"BibTeX-Key"` ...
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Parameter string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringValue'
+        '400':
+          description: CoolProp rejected the parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/fluid-parameter-double:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Set a numeric fluid parameter (e.g. volume translation in cubic backends).
+      description: Maps to the C function `AbstractState_set_fluid_parameter_double`.
+      operationId: set_fluid_parameter_double
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FluidParameterDoubleRequest'
+        required: true
+      responses:
+        '200':
+          description: Parameter set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/fractions:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Set the fractions of the mixture components.
+      description: Maps to the C function `AbstractState_set_fractions`.
+      operationId: set_fractions
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetFractionsRequest'
+        required: true
+      responses:
+        '200':
+          description: Fractions set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the fractions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/fugacity-coefficient/{i}:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: Fugacity coefficient of the i-th mixture component.
+      description: Maps to the C function `AbstractState_get_fugacity_coefficient`.
+      operationId: get_fugacity_coefficient
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: i
+        in: path
+        description: Component index
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Fugacity coefficient [-]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/fugacity/{i}:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: Fugacity of the i-th mixture component.
+      description: Maps to the C function `AbstractState_get_fugacity`.
+      operationId: get_fugacity
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: i
+        in: path
+        description: Component index
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Fugacity [Pa]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/keyed-output/sat-state:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Keyed output for the saturated liquid or vapor state (two-phase region).
+      description: Maps to the C function `AbstractState_keyed_output_satState`.
+      operationId: keyed_output_sat_state
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyedOutputSatStateRequest'
+        required: true
+      responses:
+        '200':
+          description: Output value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/keyed-output/{param}:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: Get an output value by parameter name or index.
+      description: Maps to the C function `AbstractState_keyed_output`.
+      operationId: keyed_output
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: param
+        in: path
+        description: Parameter name (e.g. `Dmolar`) or numeric index
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Output value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/mole-fractions:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: Get the mole fractions of the mixture.
+      description: Maps to the C function `AbstractState_get_mole_fractions`.
+      operationId: get_mole_fractions
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Mole fractions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayValue'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/mole-fractions/sat-state:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: |-
+        Get the mole fractions in the saturated liquid or vapor phase; only valid
+        in the two-phase region.
+      description: Maps to the C function `AbstractState_get_mole_fractions_satState`.
+      operationId: get_mole_fractions_sat_state
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: saturated_state
+        in: query
+        description: '`"liquid"` or `"gas"`.'
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Saturated-state mole fractions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayValue'
+        '400':
+          description: State is not two-phase
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/phase:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: Phase index/name of the current state.
+      description: Maps to the C function `AbstractState_phase`.
+      operationId: phase
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Phase
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseResponse'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/phase-envelope:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: 'Get phase envelope data (checked-memory variant: reports actual sizes).'
+      description: Maps to the C function `AbstractState_get_phase_envelope_data_checkedMemory`.
+      operationId: get_phase_envelope
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: max_length
+        in: query
+        description: Buffer capacity for points (default 10000).
+        required: false
+        schema:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+      - name: max_components
+        in: query
+        description: Buffer capacity for components (default 20).
+        required: false
+        schema:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+      responses:
+        '200':
+          description: Phase envelope data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseEnvelopeResponse'
+        '400':
+          description: Buffer too small or envelope not built
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/phase-envelope/build:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Build the phase envelope for the current mixture composition.
+      description: Maps to the C function `AbstractState_build_phase_envelope`.
+      operationId: build_phase_envelope
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildPhaseEnvelopeRequest'
+        required: true
+      responses:
+        '200':
+          description: Envelope built
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/phase-envelope/raw:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: |-
+        Get phase envelope data — raw variant: returns exactly `length` points
+        with no report of the actual size (faithful to the C semantics).
+      description: Maps to the C function `AbstractState_get_phase_envelope_data`.
+      operationId: get_phase_envelope_raw
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: max_length
+        in: query
+        description: Buffer capacity for points (default 10000).
+        required: false
+        schema:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+      - name: max_components
+        in: query
+        description: Buffer capacity for components (default 20).
+        required: false
+        schema:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+      responses:
+        '200':
+          description: Phase envelope data (fixed length)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseEnvelopeResponse'
+        '400':
+          description: Buffer too small or envelope not built
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/saturated-liquid-output/{param}:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: Keyed output of the saturated liquid state (two-phase region).
+      description: Maps to the C function `AbstractState_saturated_liquid_keyed_output`.
+      operationId: saturated_liquid_keyed_output
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: param
+        in: path
+        description: Parameter name or numeric index
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Output value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/saturated-vapor-output/{param}:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: Keyed output of the saturated vapor state (two-phase region).
+      description: Maps to the C function `AbstractState_saturated_vapor_keyed_output`.
+      operationId: saturated_vapor_keyed_output
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: param
+        in: path
+        description: Parameter name or numeric index
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Output value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/second-partial-deriv:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Second partial derivative in homogeneous phases.
+      description: Maps to the C function `AbstractState_second_partial_deriv`.
+      operationId: second_partial_deriv
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecondPartialDerivRequest'
+        required: true
+      responses:
+        '200':
+          description: Derivative value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/second-two-phase-deriv:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Second derivative in the two-phase region.
+      description: Maps to the C function `AbstractState_second_two_phase_deriv`.
+      operationId: second_two_phase_deriv
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecondPartialDerivRequest'
+        required: true
+      responses:
+        '200':
+          description: Derivative value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/specify-phase:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Impose the phase for all further calculations.
+      description: Maps to the C function `AbstractState_specify_phase`.
+      operationId: specify_phase
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhaseRequest'
+        required: true
+      responses:
+        '200':
+          description: Phase imposed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the phase
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/spinodal:
+    get:
+      tags:
+      - routes::abstract_state
+      summary: |-
+        Get spinodal curve data. The C API reports no actual length; trailing
+        unfilled entries are trimmed.
+      description: Maps to the C function `AbstractState_get_spinodal_data`.
+      operationId: get_spinodal
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: max_length
+        in: query
+        description: Buffer capacity for points (default 10000).
+        required: false
+        schema:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+      responses:
+        '200':
+          description: Spinodal data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpinodalResponse'
+        '400':
+          description: Buffer too small or spinodal not built
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/spinodal/build:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Build the spinodal curve.
+      description: Maps to the C function `AbstractState_build_spinodal`.
+      operationId: build_spinodal
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Spinodal built
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/unspecify-phase:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Remove an imposed phase.
+      description: Maps to the C function `AbstractState_unspecify_phase`.
+      operationId: unspecify_phase
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Phase unspecified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/update:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Update the state with a pair of inputs.
+      description: Maps to the C function `AbstractState_update`.
+      operationId: update
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: State updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the inputs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/update-and-1-out:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Update the state over arrays of inputs and get one keyed output.
+      description: Maps to the C function `AbstractState_update_and_1_out`.
+      operationId: update_and_1_out
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAndOutRequest'
+        required: true
+      responses:
+        '200':
+          description: Output array
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Out1Response'
+        '400':
+          description: CoolProp rejected the inputs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/update-and-5-out:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: Update the state over arrays of inputs and get five keyed outputs.
+      description: Maps to the C function `AbstractState_update_and_5_out`.
+      operationId: update_and_5_out
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAndOutRequest'
+        required: true
+      responses:
+        '200':
+          description: Five output arrays
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Out5Response'
+        '400':
+          description: CoolProp rejected the inputs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/abstract-state/{handle}/update-and-common-out:
+    post:
+      tags:
+      - routes::abstract_state
+      summary: |-
+        Update the state over arrays of inputs and get the five common outputs
+        (T, p, rhomolar, hmolar, smolar).
+      description: Maps to the C function `AbstractState_update_and_common_out`.
+      operationId: update_and_common_out
+      parameters:
+      - name: handle
+        in: path
+        description: AbstractState handle
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAndOutRequest'
+        required: true
+      responses:
+        '200':
+          description: Common outputs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommonOutResponse'
+        '400':
+          description: CoolProp rejected the inputs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown handle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/redirect-stdout:
+    post:
+      tags:
+      - routes::config
+      summary: Redirect CoolProp console output to a file (process-global).
+      description: Maps to the C function `redirect_stdout`.
+      operationId: redirect_stdout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedirectStdoutRequest'
+        required: true
+      responses:
+        '200':
+          description: stdout redirected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: Redirection failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/config/bool:
+    put:
+      tags:
+      - routes::config
+      summary: Set a boolean configuration value (process-global).
+      description: Maps to the C function `set_config_bool`.
+      operationId: set_config_bool
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetConfigBoolRequest'
+        required: true
+      responses:
+        '200':
+          description: Configuration applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: Unknown key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/config/departure-functions:
+    post:
+      tags:
+      - routes::config
+      summary: |-
+        Set the departure functions in the departure-function library
+        (process-global).
+      description: Maps to the C function `set_departure_functions`.
+      operationId: set_departure_functions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetDepartureFunctionsRequest'
+        required: true
+      responses:
+        '200':
+          description: Departure functions set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/config/double:
+    put:
+      tags:
+      - routes::config
+      summary: Set a numeric configuration value (process-global).
+      description: Maps to the C function `set_config_double`.
+      operationId: set_config_double
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetConfigDoubleRequest'
+        required: true
+      responses:
+        '200':
+          description: Configuration applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: Unknown key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/config/reference-state/D:
+    post:
+      tags:
+      - routes::config
+      summary: Set the reference state of a fluid to a specified state (process-global).
+      description: Maps to the C function `set_reference_stateD`.
+      operationId: set_reference_state_d
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetReferenceStateDRequest'
+        required: true
+      responses:
+        '200':
+          description: Reference state applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/config/reference-state/S:
+    post:
+      tags:
+      - routes::config
+      summary: Set the reference state of a fluid by name (process-global).
+      description: Maps to the C function `set_reference_stateS`.
+      operationId: set_reference_state_s
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetReferenceStateSRequest'
+        required: true
+      responses:
+        '200':
+          description: Reference state applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/config/string:
+    put:
+      tags:
+      - routes::config
+      summary: Set a string configuration value (process-global).
+      description: Maps to the C function `set_config_string`.
+      operationId: set_config_string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetConfigStringRequest'
+        required: true
+      responses:
+        '200':
+          description: Configuration applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: Unknown key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/fluids/add-json:
+    post:
+      tags:
+      - routes::info
+      summary: Add fluids defined by a JSON string to a backend's fluid library.
+      description: Maps to the C function `add_fluids_as_JSON`.
+      operationId: add_fluids_as_json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddFluidsRequest'
+        required: true
+      responses:
+        '200':
+          description: Fluids added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+        '400':
+          description: CoolProp rejected the fluid definitions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/fluids/extract-backend:
+    post:
+      tags:
+      - routes::info
+      summary: Split a fluid string into its backend and fluid parts.
+      description: Maps to the C function `C_extract_backend`.
+      operationId: extract_backend
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtractBackendRequest'
+        required: true
+      responses:
+        '200':
+          description: Backend and fluid parts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackendFluid'
+        '400':
+          description: Extraction failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/fluids/is-valid:
+    get:
+      tags:
+      - routes::info
+      summary: Check whether a fluid string is valid.
+      description: Maps to the C function `C_is_valid_fluid_string`.
+      operationId: is_valid_fluid_string
+      parameters:
+      - name: name
+        in: query
+        description: Fluid string to validate, e.g. `"HEOS::Water[0.5]&Ethane[0.5]"`.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Validity flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlagValue'
+  /api/v1/fluids/{fluid}/param/{param}:
+    get:
+      tags:
+      - routes::info
+      summary: 'Fluid metadata as a string: `"aliases"`, `"CAS"`, `"HASH"`, `"BibTeX"` ...'
+      description: Maps to the C function `get_fluid_param_string`.
+      operationId: get_fluid_param_string
+      parameters:
+      - name: fluid
+        in: path
+        description: Fluid name, e.g. `Water`
+        required: true
+        schema:
+          type: string
+      - name: param
+        in: path
+        description: Fluid parameter, e.g. `aliases`
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Fluid parameter value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringValue'
+        '400':
+          description: Unknown fluid/parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/fluids/{fluid}/param/{param}/length:
+    get:
+      tags:
+      - routes::info
+      summary: Length of the string that [`get_fluid_param_string`] returns.
+      description: Maps to the C function `get_fluid_param_string_len`.
+      operationId: get_fluid_param_string_len
+      parameters:
+      - name: fluid
+        in: path
+        description: Fluid name
+        required: true
+        schema:
+          type: string
+      - name: param
+        in: path
+        description: Fluid parameter
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: String length
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LengthValue'
+        '400':
+          description: Unknown fluid/parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/fortran/haprops:
+    post:
+      tags:
+      - routes::fortran
+      summary: FORTRAN 77 style wrapper of the deprecated `HAProps`.
+      description: Maps to the C function `haprops_`.
+      operationId: fortran_haprops
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaPropsRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/fortran/hapropssi:
+    post:
+      tags:
+      - routes::fortran
+      summary: FORTRAN 77 style wrapper of `HAPropsSI`.
+      description: Maps to the C function `hapropssi_`.
+      operationId: fortran_hapropssi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaPropsRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/fortran/propssi:
+    post:
+      tags:
+      - routes::fortran
+      summary: FORTRAN 77 style wrapper of `PropsSI`.
+      description: Maps to the C function `propssi_`.
+      operationId: fortran_propssi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropsSiRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/ha/cair-sat:
+    post:
+      tags:
+      - routes::humid_air
+      summary: Humid air saturation specific heat at 1 atmosphere.
+      description: Maps to the C function `cair_sat`.
+      operationId: cair_sat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CairSatRequest'
+        required: true
+      responses:
+        '200':
+          description: Specific heat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/ha/props:
+    post:
+      tags:
+      - routes::humid_air
+      summary: Deprecated humid air properties call (non-SI units).
+      description: Maps to the C function `HAProps`.
+      operationId: ha_props
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaPropsRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/ha/props-si:
+    post:
+      tags:
+      - routes::humid_air
+      summary: Humid air properties in SI units.
+      description: Maps to the C function `HAPropsSI`.
+      operationId: ha_props_si
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaPropsRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/input-pairs/index:
+    get:
+      tags:
+      - routes::info
+      summary: Integer index for an AbstractState input pair name.
+      description: Maps to the C function `get_input_pair_index`.
+      operationId: get_input_pair_index
+      parameters:
+      - name: name
+        in: query
+        description: Parameter name, e.g. `"T"`, `"Dmolar"`, `"PT_INPUTS"`, ...
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Input pair index
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexValue'
+        '400':
+          description: Unknown input pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/misc/debug-level:
+    get:
+      tags:
+      - routes::info
+      summary: Current CoolProp debug level.
+      description: Maps to the C function `get_debug_level`.
+      operationId: get_debug_level
+      responses:
+        '200':
+          description: Debug level
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexValue'
+    put:
+      tags:
+      - routes::config
+      summary: Set the CoolProp debug level (process-global).
+      description: Maps to the C function `set_debug_level`.
+      operationId: set_debug_level
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebugLevelRequest'
+        required: true
+      responses:
+        '200':
+          description: Debug level set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ack'
+  /api/v1/misc/f2k:
+    get:
+      tags:
+      - routes::info
+      summary: Convert degrees Fahrenheit to Kelvin.
+      description: Maps to the C function `F2K`.
+      operationId: f2k
+      parameters:
+      - name: t
+        in: query
+        description: Temperature.
+        required: true
+        schema:
+          type: number
+          format: double
+      responses:
+        '200':
+          description: Temperature in K
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+  /api/v1/misc/k2f:
+    get:
+      tags:
+      - routes::info
+      summary: Convert Kelvin to degrees Fahrenheit.
+      description: Maps to the C function `K2F`.
+      operationId: k2f
+      parameters:
+      - name: t
+        in: query
+        description: Temperature.
+        required: true
+        schema:
+          type: number
+          format: double
+      responses:
+        '200':
+          description: Temperature in °F
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+  /api/v1/misc/saturation-ancillary:
+    get:
+      tags:
+      - routes::info
+      summary: |-
+        Evaluate a saturation ancillary curve (fast, but less accurate than the
+        full EOS).
+      description: Maps to the C function `saturation_ancillary`.
+      operationId: saturation_ancillary
+      parameters:
+      - name: fluid
+        in: query
+        description: Fluid name (Helmholtz-EOS backend only).
+        required: true
+        schema:
+          type: string
+      - name: output
+        in: query
+        description: Desired output of the ancillary, e.g. `"P"`.
+        required: true
+        schema:
+          type: string
+      - name: q
+        in: query
+        description: 'Quality: 0 (saturated liquid) or 1 (saturated vapor).'
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: input
+        in: query
+        description: Ancillary input variable, e.g. `"T"`.
+        required: true
+        schema:
+          type: string
+      - name: value
+        in: query
+        description: Input value.
+        required: true
+        schema:
+          type: number
+          format: double
+      responses:
+        '200':
+          description: Ancillary value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/params/global/{param}:
+    get:
+      tags:
+      - routes::info
+      summary: |-
+        Query a global parameter string: `version`, `gitrevision`, `fluids_list`,
+        `errstring`, `warnstring`, `FluidsList`, ...
+      description: Maps to the C function `get_global_param_string`.
+      operationId: get_global_param_string
+      parameters:
+      - name: param
+        in: path
+        description: Global parameter name, e.g. `version`
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Parameter value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringValue'
+        '400':
+          description: Unknown parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/params/index:
+    get:
+      tags:
+      - routes::info
+      summary: Integer index for a CoolProp parameter name (for keyed outputs).
+      description: Maps to the C function `get_param_index`.
+      operationId: get_param_index
+      parameters:
+      - name: name
+        in: query
+        description: Parameter name, e.g. `"T"`, `"Dmolar"`, `"PT_INPUTS"`, ...
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Parameter index
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexValue'
+        '400':
+          description: Unknown parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/params/information/{param}:
+    get:
+      tags:
+      - routes::info
+      summary: |-
+        Long description, units, or IO role of a CoolProp parameter, e.g. for
+        `"T"` + `long` → `"Temperature [K]"`.
+      description: Maps to the C function `get_parameter_information_string`.
+      operationId: get_parameter_information_string
+      parameters:
+      - name: param
+        in: path
+        description: Parameter name, e.g. `Dmolar`
+        required: true
+        schema:
+          type: string
+      - name: info
+        in: query
+        description: |-
+          Kind of information: `"long"` (description, default), `"short"`,
+          `"units"`, or `"IO"`.
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      responses:
+        '200':
+          description: Human-readable parameter information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringValue'
+        '400':
+          description: Unknown parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/props/1si:
+    post:
+      tags:
+      - routes::props
+      summary: |-
+        Compute a parameter that needs no state inputs (critical point data,
+        molar mass, ...) for a fluid.
+      description: Maps to the C function `Props1SI`.
+      operationId: props_1si
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Props1SiRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/props/1si-multi:
+    post:
+      tags:
+      - routes::props
+      summary: |-
+        Vectorized `Props1SI` over several fluids. Note that — exactly like the
+        underlying C function — only the first result row is exposed.
+      description: Maps to the C function `Props1SImulti`.
+      operationId: props_1si_multi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Props1SiMultiRequest'
+        required: true
+      responses:
+        '200':
+          description: Result values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/props/legacy:
+    post:
+      tags:
+      - routes::props
+      summary: Deprecated legacy property call, KSI unit system, char input names.
+      description: Maps to the C function `Props`.
+      operationId: props_legacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropsLegacyRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/props/legacy-s:
+    post:
+      tags:
+      - routes::props
+      summary: Deprecated legacy property call with string input names (KSI units).
+      description: Maps to the C function `PropsS`.
+      operationId: props_legacy_s
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropsLegacyRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/props/legacy/1:
+    post:
+      tags:
+      - routes::props
+      summary: 'Deprecated legacy `Props1` (KSI units): single-state output for a fluid.'
+      description: Maps to the C function `Props1`.
+      operationId: props_legacy_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Props1SiRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/props/phase:
+    post:
+      tags:
+      - routes::props
+      summary: |-
+        Phase at a given state point, e.g. `"liquid"`, `"gas"`, `"twophase"`,
+        `"supercritical"`, ...
+      description: Maps to the C function `PhaseSI`.
+      operationId: phase_si
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropsSiRequest'
+        required: true
+      responses:
+        '200':
+          description: Phase name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/props/si:
+    post:
+      tags:
+      - routes::props
+      summary: Compute a thermophysical property (SI units) at a single state point.
+      description: Maps to the C function `PropsSI`.
+      operationId: props_si
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropsSiRequest'
+        required: true
+      responses:
+        '200':
+          description: Property value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoubleValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/props/si-multi:
+    post:
+      tags:
+      - routes::props
+      summary: |-
+        Vectorized `PropsSI`: compute one or more outputs over arrays of input
+        values. Returns a matrix with one row per input point and one column per
+        requested output.
+      description: Maps to the C function `PropsSImulti`.
+      operationId: props_si_multi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropsSiMultiRequest'
+        required: true
+      responses:
+        '200':
+          description: Result matrix (rows = input points, columns = outputs)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixValue'
+        '400':
+          description: CoolProp rejected the input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /health:
+    get:
+      tags: []
+      summary: Liveness probe.
+      operationId: health
+      responses:
+        '200':
+          description: Server is up
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+components:
+  schemas:
+    Ack:
+      type: object
+      description: Simple acknowledgement for mutating calls.
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+    AddFluidsRequest:
+      type: object
+      required:
+      - backend
+      - fluid_string
+      properties:
+        backend:
+          type: string
+          description: Backend to add the fluids to, e.g. `"HEOS"`, `"SRK"`, `"PR"`.
+        fluid_string:
+          type: string
+          description: JSON-formatted fluid definition string.
+    ArrayValue:
+      type: object
+      description: 1-D result array.
+      required:
+      - values
+      properties:
+        values:
+          type: array
+          items:
+            type: number
+            format: double
+    BackendFluid:
+      type: object
+      required:
+      - backend
+      - fluid
+      properties:
+        backend:
+          type: string
+          description: Backend part (`"HEOS"`, `"REFPROP"`, ...; empty when not prefixed).
+        fluid:
+          type: string
+          description: Fluid part, e.g. `"Water[0.5]&Ethane[0.5]"`.
+    BinaryInteractionRequest:
+      type: object
+      required:
+      - i
+      - j
+      - parameter
+      - value
+      properties:
+        i:
+          type: integer
+          format: int64
+          description: Index of the first fluid of the binary pair.
+        j:
+          type: integer
+          format: int64
+          description: Index of the second fluid of the binary pair.
+        parameter:
+          type: string
+          description: Parameter name, e.g. `"betaT"`, `"gammaT"`.
+        value:
+          type: number
+          format: double
+    BuildPhaseEnvelopeRequest:
+      type: object
+      properties:
+        level:
+          type:
+          - string
+          - 'null'
+          description: 'Refinement level: `"none"` (recommended) or a higher level string.'
+    CairSatRequest:
+      type: object
+      required:
+      - t
+      properties:
+        t:
+          type: number
+          format: double
+          description: Temperature in K (valid range 250–300 K, no bound checking).
+    CommonOutResponse:
+      type: object
+      required:
+      - t
+      - p
+      - rhomolar
+      - hmolar
+      - smolar
+      properties:
+        hmolar:
+          type: array
+          items:
+            type: number
+            format: double
+        p:
+          type: array
+          items:
+            type: number
+            format: double
+        rhomolar:
+          type: array
+          items:
+            type: number
+            format: double
+        smolar:
+          type: array
+          items:
+            type: number
+            format: double
+        t:
+          type: array
+          items:
+            type: number
+            format: double
+    CreateRequest:
+      type: object
+      required:
+      - backend
+      - fluids
+      properties:
+        backend:
+          type: string
+          description: 'Backend: `"HEOS"`, `"REFPROP"`, `"INCOMP"`, `"SRK"`, `"PR"` ...'
+        fluids:
+          type: array
+          items:
+            type: string
+          description: Fluids of the mixture, one entry per component.
+    CriticalPointDto:
+      type: object
+      required:
+      - t
+      - p
+      - rhomolar
+      - stable
+      properties:
+        p:
+          type: number
+          format: double
+        rhomolar:
+          type: number
+          format: double
+        stable:
+          type: boolean
+        t:
+          type: number
+          format: double
+    CriticalPointsResponse:
+      type: object
+      required:
+      - points
+      properties:
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriticalPointDto'
+    CubicAlphaCRequest:
+      type: object
+      required:
+      - i
+      - parameter
+      - c1
+      - c2
+      - c3
+      properties:
+        c1:
+          type: number
+          format: double
+        c2:
+          type: number
+          format: double
+        c3:
+          type: number
+          format: double
+        i:
+          type: integer
+          format: int64
+          description: Index of the fluid the parameters apply to.
+        parameter:
+          type: string
+          description: Alpha function name, e.g. `"TWU"`.
+    DebugLevelRequest:
+      type: object
+      required:
+      - level
+      properties:
+        level:
+          type: integer
+          format: int32
+          description: Verbosity level for CoolProp debugging output (0–10).
+    DoubleValue:
+      type: object
+      description: Single scalar result.
+      required:
+      - value
+      properties:
+        value:
+          type: number
+          format: double
+    ErrorDetail:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+    ErrorEnvelope:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+    ExtractBackendRequest:
+      type: object
+      required:
+      - fluid_string
+      properties:
+        fluid_string:
+          type: string
+          description: Fluid string, e.g. `"REFPROP::Water[0.5]&Ethane[0.5]"`.
+    FirstPartialDerivRequest:
+      type: object
+      required:
+      - of
+      - wrt
+      - constant
+      properties:
+        constant:
+          $ref: '#/components/schemas/Param'
+          description: Parameter held constant.
+        of:
+          $ref: '#/components/schemas/Param'
+        wrt:
+          $ref: '#/components/schemas/Param'
+    FirstSaturationDerivRequest:
+      type: object
+      required:
+      - of
+      - wrt
+      properties:
+        of:
+          $ref: '#/components/schemas/Param'
+          description: Parameter being differentiated (name or index).
+        wrt:
+          $ref: '#/components/schemas/Param'
+          description: Parameter the derivative is taken with respect to.
+    FirstTwoPhaseDerivRequest:
+      type: object
+      required:
+      - of
+      - wrt
+      - constant
+      properties:
+        constant:
+          $ref: '#/components/schemas/Param'
+        of:
+          $ref: '#/components/schemas/Param'
+        wrt:
+          $ref: '#/components/schemas/Param'
+        x_end:
+          type:
+          - number
+          - 'null'
+          format: double
+          description: Spline end fraction (0..1, usually 0.1) — splined variant only.
+    FlagValue:
+      type: object
+      description: Boolean flag result.
+      required:
+      - value
+      properties:
+        value:
+          type: boolean
+    FluidParameterDoubleRequest:
+      type: object
+      required:
+      - i
+      - parameter
+      - value
+      properties:
+        i:
+          type: integer
+          format: int64
+          description: Index of the fluid the parameter applies to.
+        parameter:
+          type: string
+          description: Parameter name, e.g. `"cm"` for volume translation.
+        value:
+          type: number
+          format: double
+    HaPropsRequest:
+      type: object
+      required:
+      - output
+      - name1
+      - prop1
+      - name2
+      - prop2
+      - name3
+      - prop3
+      properties:
+        name1:
+          type: string
+          description: First input name, e.g. `"T"`.
+        name2:
+          type: string
+          description: Second input name, e.g. `"P"`.
+        name3:
+          type: string
+          description: Third input name, e.g. `"R"` (relative humidity) or `"W"`.
+        output:
+          type: string
+          description: Output, e.g. `"H"`, `"W"`, `"R"`, `"T"`, `"V"`, ...
+        prop1:
+          type: number
+          format: double
+          description: First input value.
+        prop2:
+          type: number
+          format: double
+          description: Second input value.
+        prop3:
+          type: number
+          format: double
+          description: Third input value.
+    HandleResponse:
+      type: object
+      required:
+      - handle
+      properties:
+        handle:
+          type: integer
+          format: int64
+          description: Handle for all subsequent calls.
+    HealthResponse:
+      type: object
+      required:
+      - status
+      properties:
+        status:
+          type: string
+    IndexValue:
+      type: object
+      description: Single integer index result.
+      required:
+      - index
+      properties:
+        index:
+          type: integer
+          format: int64
+    InputPair:
+      oneOf:
+      - type: string
+        description: Input pair name, e.g. `"PT_INPUTS"`, `"PQ_INPUTS"`, `"QT_INPUTS"`, ...
+      - type: integer
+        format: int64
+        description: Integer input pair index from `get_input_pair_index`.
+      description: |-
+        An AbstractState input pair, addressable either by name (`"PT_INPUTS"`)
+        or by its integer index (as returned by `get_input_pair_index`).
+    KeyedOutputSatStateRequest:
+      type: object
+      required:
+      - saturated_state
+      - param
+      properties:
+        param:
+          $ref: '#/components/schemas/Param'
+          description: Parameter name or index.
+        saturated_state:
+          type: string
+          description: '`"liquid"` or `"gas"`.'
+    LengthValue:
+      type: object
+      description: Single length result.
+      required:
+      - length
+      properties:
+        length:
+          type: integer
+          format: int64
+    MatrixValue:
+      type: object
+      description: |-
+        2-D result matrix: `shape` is `[points, outputs]` — one row per input
+        point, one column per requested output (mirrors CoolProp's own
+        `PropsSImulti` layout).
+      required:
+      - shape
+      - values
+      properties:
+        shape:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+        values:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: double
+          description: '`values[point][output]`.'
+    Out1Response:
+      type: object
+      required:
+      - out
+      properties:
+        out:
+          type: array
+          items:
+            type: number
+            format: double
+    Out5Response:
+      type: object
+      required:
+      - out1
+      - out2
+      - out3
+      - out4
+      - out5
+      properties:
+        out1:
+          type: array
+          items:
+            type: number
+            format: double
+        out2:
+          type: array
+          items:
+            type: number
+            format: double
+        out3:
+          type: array
+          items:
+            type: number
+            format: double
+        out4:
+          type: array
+          items:
+            type: number
+            format: double
+        out5:
+          type: array
+          items:
+            type: number
+            format: double
+    Param:
+      oneOf:
+      - type: string
+        description: Parameter name, e.g. `"T"`, `"P"`, `"Dmolar"`, `"Hmolar"`, ...
+      - type: integer
+        format: int64
+        description: Integer parameter index from `get_param_index`.
+      description: |-
+        A CoolProp output parameter, addressable either by name (`"Dmolar"`) or by
+        its integer index (as returned by `get_param_index`).
+    PhaseEnvelopeResponse:
+      type: object
+      required:
+      - length
+      - components
+      - t
+      - p
+      - rhomolar_vap
+      - rhomolar_liq
+      - x
+      - y
+      properties:
+        components:
+          type: integer
+          description: Number of mixture components in `x`/`y`.
+          minimum: 0
+        length:
+          type: integer
+          description: Number of envelope points.
+          minimum: 0
+        p:
+          type: array
+          items:
+            type: number
+            format: double
+        rhomolar_liq:
+          type: array
+          items:
+            type: number
+            format: double
+        rhomolar_vap:
+          type: array
+          items:
+            type: number
+            format: double
+        t:
+          type: array
+          items:
+            type: number
+            format: double
+        x:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: double
+          description: 'Liquid composition per point: `x[point][component]`.'
+        y:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: double
+          description: 'Vapor composition per point: `y[point][component]`.'
+    PhaseRequest:
+      type: object
+      required:
+      - phase
+      properties:
+        phase:
+          type: string
+          description: 'Phase to impose: `"liquid"`, `"gas"`, `"supercritical"`, ...'
+    PhaseResponse:
+      type: object
+      required:
+      - phase_index
+      - phase
+      properties:
+        phase:
+          type: string
+          description: |-
+            Phase name, e.g. `"liquid"`, `"gas"`, `"twophase"`,
+            `"supercritical"`, ...; `"phase_<index>"` for unmapped values.
+        phase_index:
+          type: integer
+          format: int32
+          description: Raw phase index from CoolProp (`iphase_*` enum).
+    Props1SiMultiRequest:
+      type: object
+      required:
+      - outputs
+      - fluids
+      properties:
+        backend:
+          type:
+          - string
+          - 'null'
+          description: Backend (`"HEOS"`, `"REFPROP"`, ...). Defaults to `"HEOS"`.
+        fluids:
+          type: array
+          items:
+            type: string
+          description: Fluid names (one per component).
+        fractions:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Molar fractions, one per fluid. Defaults to an equal split.
+        outputs:
+          type: array
+          items:
+            type: string
+          description: Output parameter names.
+    Props1SiRequest:
+      type: object
+      required:
+      - fluid
+      - output
+      properties:
+        fluid:
+          type: string
+          description: Fluid name, e.g. `"Water"` or `"HEOS::R134a"`.
+        output:
+          type: string
+          description: |-
+            Output that requires no state inputs, e.g. `"Tcrit"`, `"Pcrit"`,
+            `"molar_mass"`, `"aliases"`, ...
+    PropsLegacyRequest:
+      type: object
+      required:
+      - output
+      - name1
+      - prop1
+      - name2
+      - prop2
+      - ref
+      properties:
+        name1:
+          type: string
+          description: |-
+            Single-character input name (e.g. `"T"`) — the legacy API only
+            accepts one character here.
+        name2:
+          type: string
+        output:
+          type: string
+        prop1:
+          type: number
+          format: double
+        prop2:
+          type: number
+          format: double
+        ref:
+          type: string
+          description: Fluid / reference string.
+    PropsSiMultiRequest:
+      type: object
+      required:
+      - outputs
+      - name1
+      - prop1
+      - name2
+      - prop2
+      - fluids
+      properties:
+        backend:
+          type:
+          - string
+          - 'null'
+          description: Backend (`"HEOS"`, `"REFPROP"`, ...). Defaults to `"HEOS"`.
+        fluids:
+          type: array
+          items:
+            type: string
+          description: Fluid names (one per component).
+        fractions:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Molar fractions, one per fluid. Defaults to an equal split.
+        name1:
+          type: string
+          description: Name of the first input variable.
+        name2:
+          type: string
+          description: Name of the second input variable.
+        outputs:
+          type: array
+          items:
+            type: string
+          description: Output parameter names; one column of the result per output.
+        prop1:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Values of the first input variable.
+        prop2:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Values of the second input variable (same length as `prop1`).
+    PropsSiRequest:
+      type: object
+      required:
+      - output
+      - name1
+      - prop1
+      - name2
+      - prop2
+      - fluid
+      properties:
+        fluid:
+          type: string
+          description: |-
+            Fluid string, e.g. `"Propane[0.5]&Ethane[0.5]"`, `"HEOS::Water"`,
+            `"REFPROP::R134a"` (backend prefix optional, default `HEOS`).
+        name1:
+          type: string
+          description: Name of the first input, e.g. `"T"`.
+        name2:
+          type: string
+          description: Name of the second input, e.g. `"P"`.
+        output:
+          type: string
+          description: Output parameter name, e.g. `"Dmolar"`, `"Hmolar"`, `"T"`, ...
+        prop1:
+          type: number
+          format: double
+          description: Value of the first input.
+        prop2:
+          type: number
+          format: double
+          description: Value of the second input.
+    RedirectStdoutRequest:
+      type: object
+      required:
+      - file
+      properties:
+        file:
+          type: string
+          description: |-
+            File path to append stdout to (process-global). Use `/dev/stdout` on
+            Linux to restore the original stream.
+    SecondPartialDerivRequest:
+      type: object
+      required:
+      - of1
+      - wrt1
+      - constant1
+      - wrt2
+      - constant2
+      properties:
+        constant1:
+          $ref: '#/components/schemas/Param'
+        constant2:
+          $ref: '#/components/schemas/Param'
+        of1:
+          $ref: '#/components/schemas/Param'
+        wrt1:
+          $ref: '#/components/schemas/Param'
+        wrt2:
+          $ref: '#/components/schemas/Param'
+    SetConfigBoolRequest:
+      type: object
+      required:
+      - key
+      - val
+      properties:
+        key:
+          type: string
+          description: Configuration key, e.g. `"SUPERANCILLARY"`.
+        val:
+          type: boolean
+    SetConfigDoubleRequest:
+      type: object
+      required:
+      - key
+      - val
+      properties:
+        key:
+          type: string
+          description: Configuration key, e.g. `"RHOL_TO_RHOMASS_MAX_RATIO"`.
+        val:
+          type: number
+          format: double
+    SetConfigStringRequest:
+      type: object
+      required:
+      - key
+      - val
+      properties:
+        key:
+          type: string
+          description: Configuration key, e.g. `"VTPR_BACKEND"`.
+        val:
+          type: string
+    SetDepartureFunctionsRequest:
+      type: object
+      required:
+      - string_data
+      properties:
+        string_data:
+          type: string
+          description: |-
+            Departure functions as a JSON string, or the contents of a REFPROP
+            HMX.BNC file.
+    SetFractionsRequest:
+      type: object
+      required:
+      - fractions
+      properties:
+        fractions:
+          type: array
+          items:
+            type: number
+            format: double
+          description: Fractions (molar by default; mass/volume depending on backend use).
+    SetReferenceStateDRequest:
+      type: object
+      required:
+      - fluid
+      - t
+      - rhomolar
+      - hmolar0
+      - smolar0
+      properties:
+        fluid:
+          type: string
+          description: Fluid name.
+        hmolar0:
+          type: number
+          format: double
+          description: Molar enthalpy at the new reference state [J/mol].
+        rhomolar:
+          type: number
+          format: double
+          description: Molar density [mol/m³].
+        smolar0:
+          type: number
+          format: double
+          description: Molar entropy at the new reference state [J/mol/K].
+        t:
+          type: number
+          format: double
+          description: Temperature [K].
+    SetReferenceStateSRequest:
+      type: object
+      required:
+      - fluid
+      - reference_state
+      properties:
+        fluid:
+          type: string
+          description: Fluid name.
+        reference_state:
+          type: string
+          description: 'Named reference state: `"IIR"`, `"ASHRAE"`, `"NBP"`, `"DEF"`, `"RESET"`.'
+    SpinodalResponse:
+      type: object
+      required:
+      - tau
+      - delta
+      - m1
+      properties:
+        delta:
+          type: array
+          items:
+            type: number
+            format: double
+        m1:
+          type: array
+          items:
+            type: number
+            format: double
+        tau:
+          type: array
+          items:
+            type: number
+            format: double
+    StringArrayValue:
+      type: object
+      description: 1-D string array result.
+      required:
+      - values
+      properties:
+        values:
+          type: array
+          items:
+            type: string
+    StringValue:
+      type: object
+      description: Single string result.
+      required:
+      - value
+      properties:
+        value:
+          type: string
+    UpdateAndOutRequest:
+      type: object
+      required:
+      - input_pair
+      - value1
+      - value2
+      properties:
+        input_pair:
+          $ref: '#/components/schemas/InputPair'
+        output:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Param'
+            description: Single output parameter (update-and-1-out variant).
+        outputs:
+          type:
+          - array
+          - 'null'
+          items:
+            $ref: '#/components/schemas/Param'
+          description: Exactly five output parameters (update-and-5-out variant).
+        value1:
+          type: array
+          items:
+            type: number
+            format: double
+        value2:
+          type: array
+          items:
+            type: number
+            format: double
+    UpdateRequest:
+      type: object
+      required:
+      - input_pair
+      - value1
+      - value2
+      properties:
+        input_pair:
+          $ref: '#/components/schemas/InputPair'
+          description: Input pair (name or index), e.g. `"PT_INPUTS"`.
+        value1:
+          type: number
+          format: double
+          description: First input value (e.g. pressure [Pa] for `PT_INPUTS`).
+        value2:
+          type: number
+          format: double
+          description: Second input value (e.g. temperature [K] for `PT_INPUTS`).

@@ -15,12 +15,14 @@ both the router and the generated OpenAPI document.
 
 ## Quick start
 
-Prerequisites: Rust (stable), `cmake`, a C++17 compiler, and `git` (to fetch
-the pinned CoolProp sources on first build — ~3–5 minutes).
+Prerequisites: Rust (stable), `cmake`, a C++17 compiler, `git` (to fetch
+the pinned CoolProp sources on first build — ~3–5 minutes), and
+[Task](https://taskfile.dev) (a Makefile with the same targets is also
+provided).
 
 ```bash
-make test    # full suite: unit + API + golden values + coverage check
-make run     # serve on http://0.0.0.0:8080  (ADDR=1.2.3.4:9000 to override)
+task test    # full suite: unit + API + golden values + coverage check
+task run     # serve on http://0.0.0.0:8080  (ADDR=1.2.3.4:9000 to override)
 ```
 
 Then:
@@ -28,7 +30,9 @@ Then:
 - Swagger UI: <http://localhost:8080/swagger-ui>
 - OpenAPI document: <http://localhost:8080/openapi.json>
 - Health: `GET /health`
-- Dump the spec to disk: `make openapi` → `openapi.json`
+- Dump the spec to disk: `task openapi` → `openapi.json` + `openapi.yaml`
+  (the YAML copy is committed at the repo root — regenerate it when routes
+  change)
 
 ## The example from the CoolProp README, over HTTP
 

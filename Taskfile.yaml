@@ -1,0 +1,36 @@
+version: "3"
+
+tasks:
+  build:
+    desc: Build everything (release), including the vendored CoolProp static library (auto-cloned at the pinned tag v8.0.0 on first run).
+    cmds:
+      - cargo build --release
+
+  test:
+    desc: Full test suite — unit, API integration, golden values, and the machine-checked 100%-coverage test.
+    cmds:
+      # --test-threads=1: CoolProp keeps process-global state (config,
+      # reference states, stdout redirection, errstring), so tests that
+      # mutate it can race with concurrent tests.
+      - cargo test --workspace -- --test-threads=1
+
+  run:
+    desc: Run the server (default http://0.0.0.0:8080, override with ADDR=...).
+    cmds:
+      - cargo run --release
+
+  openapi:
+    desc: Extract the OpenAPI spec from the code into openapi.json and openapi.yaml at the repo root. openapi.yaml is the published copy — commit it when routes change.
+    sources:
+      - crates/coolprop-server/src/**
+      - crates/coolprop-server/examples/dump-openapi.rs
+    generates:
+      - openapi.json
+      - openapi.yaml
+    cmds:
+      - cargo run -p coolprop-server --example dump-openapi
+
+  clean:
+    desc: Remove build artifacts.
+    cmds:
+      - cargo clean
