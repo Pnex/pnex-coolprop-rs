@@ -6,7 +6,8 @@
 #   push of a git tag   -> :<tag-name>             (e.g. :v1.0.0)
 #
 # Required repository secrets: DOCKER_USERNAME, DOCKER_TOKEN
-# (Docker Hub -> Account Settings -> Personal access tokens, read/write).
+# (repo Settings -> Secrets and variables -> Actions -> New repository secret;
+# the token is a Docker Hub "Personal access token" with Read/Write scope).
 name: Docker
 
 on:
@@ -29,18 +30,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Fails with a clear message instead of the cryptic
+      # "Username and password required" from login-action below, when the
+      # secrets are missing — typical causes: added to a different repo,
+      # added as environment/organization secret this repo can't see, or
+      # added under "Variables" instead of "Secrets".
+      - name: Check Docker Hub credentials
+        if: ${{ secrets.DOCKER_USERNAME == '' || secrets.DOCKER_TOKEN == '' }}
+        run: |
+          echo "::error::DOCKER_USERNAME / DOCKER_TOKEN secrets are not visible to this workflow. Set them as *repository* secrets: Settings -> Secrets and variables -> Actions -> New repository secret (exact names, uppercase). If they exist but you still see this, they were added to another repo, to an environment (needs 'environment:' on the job), or as org secrets without access to this repo."
+          exit 1
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Docker metadata (tags & labels)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           # branch -> branch name, main also gets latest, git tag -> tag name
@@ -50,7 +62,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build & push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           # Add linux/arm64 here for multi-arch (slower build under QEMU).
