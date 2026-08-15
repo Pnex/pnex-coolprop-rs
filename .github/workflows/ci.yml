@@ -39,9 +39,24 @@ jobs:
         run: cargo build --release --workspace
 
       # Full suite: unit tests, API integration tests, golden values, and
-      # the machine-checked 100% CoolPropLib.h coverage test.
+      # the machine-checked 100% CoolPropLib.h coverage test. On failure the
+      # failing test names and panic messages are copied into the run
+      # summary so they are visible without log access.
       - name: Test
-        run: cargo test --workspace
+        run: |
+          set +e
+          cargo test --workspace --no-fail-fast 2>&1 | tee /tmp/test.log
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then
+            {
+              echo "## Failing tests"
+              grep -E "^test .* FAILED$" /tmp/test.log || true
+              echo
+              echo "## Failure details"
+              grep -E -A12 "panicked at" /tmp/test.log | head -120 || true
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$rc"
 
       - name: Dump OpenAPI spec
         run: cargo run -p coolprop-server --example dump-openapi
