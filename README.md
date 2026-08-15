@@ -34,6 +34,23 @@ Then:
   (the YAML copy is committed at the repo root — regenerate it when routes
   change)
 
+## Docker
+
+Multi-stage build: latest stable Rust on Debian trixie (GCC 14, cmake/ninja)
+compiles the server and the vendored CoolProp v8.0.0; the runtime is
+**distroless** (`gcr.io/distroless/cc-debian13:nonroot`) — no shell, no
+package manager, non-root, read-only-friendly. Result: a ~83 MB image.
+
+```bash
+docker compose up --build          # build & serve on http://localhost:8080
+COOLPROP_PORT=9000 docker compose up -d   # different host port
+docker run -p 8080:8080 shanisma/pnex-coolprop-rs:latest   # prebuilt from Docker Hub
+```
+
+CI (`.github/workflows/docker.yml`) publishes to
+`shanisma/pnex-coolprop-rs` on every push: each branch gets `:<branch>`,
+`main` also gets `:latest`, and pushed git tags get `:<tag>`.
+
 ## The example from the CoolProp README, over HTTP
 
 ```bash

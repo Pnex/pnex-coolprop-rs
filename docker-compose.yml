@@ -1,0 +1,25 @@
+# CoolProp REST server — production-flavored compose file.
+#
+#   docker compose up --build   # build locally and run
+#   docker compose up           # pull shanisma/pnex-coolprop-rs:latest (CI-published) and run
+#
+services:
+  coolprop:
+    image: shanisma/pnex-coolprop-rs:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coolprop-server
+    ports:
+      # host port overrideable: COOLPROP_PORT=9000 docker compose up -d
+      - "${COOLPROP_PORT:-8080}:8080"
+    environment:
+      # CLI arg > this env > built-in default (see crates/coolprop-server/src/main.rs)
+      COOLPROP_SERVER_ADDR: 0.0.0.0:8080
+    restart: unless-stopped
+    # --- hardening: the server is a pure compute service, it needs none of these ---
+    read_only: true            # no filesystem writes at all
+    cap_drop: [ALL]            # drop every Linux capability
+    security_opt:
+      - no-new-privileges:true # block privilege escalation (setuid/setgid)
+    init: true                 # reap zombies, forward signals
